@@ -104,7 +104,19 @@ class hand_pose:
                 try:
                
                     results = self.model.track(self.frame_rgb , persist=False, verbose=False)#จำกัดจำนวน [0]
+                    # size cam
                     h, w, _ = self.frame_rgb.shape
+                    # # Horizontal field of view in degrees
+                    horizontal_fov = 58          
+                    vertical_fov = 45  
+
+                    fx = h / (2 * np.tan(np.radians(horizontal_fov / 2)))
+                    fy = w / (2 * np.tan(np.radians(vertical_fov / 2)))
+
+                    # Calculate principal point (in pixels)
+                    cx = h / 2
+                    cy = w / 2
+
                     frame_copy = self.frame_rgb.copy()
 
                     
@@ -146,6 +158,10 @@ class hand_pose:
                                     if (int(ctx_p) >= 0 and int(ctx_p) <= (w-1)) or int(cty_p) >= 0 and int(cty_p) <= (h-1):
 
                                         dist =  self.frame_depth[int(cty_p-1) , int(ctx_p)] #mm
+                                        # Calculate x, y, z coordinates
+                                        coordinates_z = dist   # Depth value in millimeters
+                                        coordinates_x = ( int(ctx_p) - cx) * coordinates_z / fx
+                                        coordinates_y = (int(cty_p-1) - cy) * coordinates_z / fy
 
 
                                         #print(dist)
@@ -261,6 +277,7 @@ class hand_pose:
                         print('Sucess    : ',self.sucess)
                         #ไม่ส่งค่า Distance
                         print('Distance  : ',self.min_value ," mm")
+                        print('x : ',coordinates_x ," y :" , coordinates_y)
 
                         cv2.imwrite(os.path.join(self.current_dir,'human_pose.jpg'),frame_)
                         cv2.imwrite(os.path.join(self.current_dir,'hand.jpg'),frame_copy)
